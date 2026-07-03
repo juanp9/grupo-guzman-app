@@ -12,7 +12,8 @@ CREATE TABLE IF NOT EXISTS propiedades (
   tipo_propiedad   text        NOT NULL
                                CHECK (tipo_propiedad IN (
                                  'casa', 'apartamento', 'local_comercial', 'oficina',
-                                 'bodega', 'terreno', 'edificio', 'otro'
+                                 'bodega', 'terreno', 'lote', 'casa_campestre', 'finca',
+                                 'edificio', 'otro'
                                )),
   ubicacion        text        NOT NULL,
   direccion        text        NOT NULL,
@@ -81,9 +82,7 @@ CREATE POLICY "Sin acceso publico" ON propiedades
 
 DROP POLICY IF EXISTS "Imagenes publicas - lectura" ON storage.objects;
 CREATE POLICY "Imagenes publicas - lectura" ON storage.objects
-  FOR SELECT
-  TO public
-  USING (bucket_id = 'propiedades');
+  FOR SELECT);
 
 -- Las operaciones de escritura (upload/delete) se hacen desde el servidor
 -- con el service_role key, que bypasea RLS — no se necesita política adicional.

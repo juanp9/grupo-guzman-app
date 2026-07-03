@@ -9,7 +9,7 @@ export const propiedadSchema = z.object({
   titulo: z.string().min(1, "El título es requerido"),
   tipo_operacion: z.enum(["renta", "venta"], { error: "Selecciona una opción" }),
   tipo_propiedad: z.enum(
-    ["casa", "apartamento", "local_comercial", "oficina", "bodega", "terreno", "edificio", "otro"],
+    ["casa", "apartamento", "local_comercial", "oficina", "bodega", "terreno", "lote", "casa_campestre", "finca", "edificio", "otro"],
     { error: "Selecciona una opción" }
   ),
   ubicacion: z.string().min(1, "La ubicación es requerida"),

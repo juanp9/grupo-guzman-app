@@ -101,6 +101,24 @@ export async function actualizarPropiedad(id: string, payload: unknown) {
   redirect(`/propiedades/${id}`);
 }
 
+export async function cambiarEstado(
+  id: string,
+  estado: "disponible" | "reservado" | "vendido" | "rentado"
+) {
+  const { error } = await supabaseAdmin
+    .from("propiedades")
+    .update({ estado })
+    .eq("id", id);
+
+  if (error) return { error: error.message };
+
+  revalidatePath("/propiedades");
+  revalidatePath(`/propiedades/${id}`);
+  // El catálogo público muestra solo disponibles — forzar revalidación
+  revalidatePath("/catalogo");
+  revalidatePath(`/catalogo/${id}`);
+}
+
 export async function eliminarPropiedad(id: string) {
   const { error } = await supabaseAdmin
     .from("propiedades")

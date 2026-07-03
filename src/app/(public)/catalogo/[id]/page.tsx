@@ -1,24 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getPropiedad } from "@/lib/actions/propiedades";
-import DeleteButton from "@/components/propiedades/delete-button";
-import ShareButton from "@/components/propiedades/share-button";
-import EstadoSelector from "@/components/propiedades/estado-selector";
 
 const TIPO_OPERACION: Record<string, string> = { renta: "Renta", venta: "Venta" };
 const TIPO_PROPIEDAD: Record<string, string> = {
   casa: "Casa", apartamento: "Apartamento", local_comercial: "Local comercial",
   oficina: "Oficina", bodega: "Bodega", terreno: "Terreno", lote: "Lote",
   casa_campestre: "Casa campestre", finca: "Finca", edificio: "Edificio", otro: "Otro",
-};
-const ESTADO_LABEL: Record<string, string> = {
-  disponible: "Disponible", reservado: "Reservado", vendido: "Vendido", rentado: "Rentado",
-};
-const ESTADO_STYLE: Record<string, string> = {
-  disponible: "bg-green-100 text-green-700",
-  reservado: "bg-amber-100 text-amber-700",
-  vendido: "bg-slate-100 text-slate-500",
-  rentado: "bg-purple-100 text-purple-700",
 };
 const OPERACION_STYLE: Record<string, string> = {
   renta: "bg-blue-100 text-blue-700",
@@ -33,7 +21,7 @@ function formatPrecio(precio: number, moneda: string) {
   }).format(precio);
 }
 
-export default async function DetallePropiedadPage({
+export default async function CatalogoDetallePage({
   params,
 }: {
   params: Promise<{ id: string }>;
@@ -43,23 +31,13 @@ export default async function DetallePropiedadPage({
   if (!p) notFound();
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
-      {/* breadcrumb + acciones */}
-      <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
-        <Link href="/propiedades" className="text-sm text-slate-500 hover:text-slate-900 transition-colors">
-          ← Volver al listado
-        </Link>
-        <div className="flex items-center gap-2 flex-wrap">
-          <ShareButton id={p.id} />
-          <Link
-            href={`/propiedades/${p.id}/editar`}
-            className="px-4 py-2 bg-slate-900 text-white text-sm font-medium rounded-lg hover:bg-slate-700 transition-colors"
-          >
-            Editar
-          </Link>
-          <DeleteButton id={p.id} />
-        </div>
-      </div>
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
+      <Link
+        href="/catalogo"
+        className="text-sm text-slate-500 hover:text-slate-900 transition-colors mb-6 inline-block"
+      >
+        ← Ver más propiedades
+      </Link>
 
       {/* galería */}
       {p.imagenes?.length > 0 && (
@@ -70,7 +48,7 @@ export default async function DetallePropiedadPage({
               key={i}
               src={url}
               alt={`Imagen ${i + 1} de ${p.titulo}`}
-              className="h-64 w-auto max-w-sm rounded-xl object-cover shrink-0 snap-start border border-slate-200"
+              className="h-72 w-auto max-w-sm rounded-xl object-cover shrink-0 snap-start border border-slate-200"
             />
           ))}
         </div>
@@ -78,26 +56,30 @@ export default async function DetallePropiedadPage({
 
       {/* contenido */}
       <div className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8">
-        {/* header */}
-        <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
-          <div className="flex gap-2 flex-wrap">
-            <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${OPERACION_STYLE[p.tipo_operacion]}`}>
-              {TIPO_OPERACION[p.tipo_operacion]}
+        <div className="flex gap-2 mb-4 flex-wrap">
+          <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${OPERACION_STYLE[p.tipo_operacion]}`}>
+            {TIPO_OPERACION[p.tipo_operacion]}
+          </span>
+          {p.destacado && (
+            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-100 text-amber-700">
+              ★ Destacado
             </span>
-            {p.destacado && (
-              <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-100 text-amber-700">
-                ★ Destacado
-              </span>
-            )}
-          </div>
-          {/* Cambio de estado rápido */}
-          <EstadoSelector id={p.id} estadoActual={p.estado} />
+          )}
         </div>
 
         <h1 className="text-2xl font-bold text-slate-900 mb-1">{p.titulo}</h1>
-        <p className="text-slate-500 text-sm mb-4">
+
+        {/* ubicación general — sin dirección exacta */}
+        <p className="text-slate-500 text-sm mb-4 flex items-center gap-1.5">
+          <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+              d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+              d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
           {TIPO_PROPIEDAD[p.tipo_propiedad]} · {p.ubicacion}
         </p>
+
         <p className="text-3xl font-bold text-slate-900 mb-6">
           {formatPrecio(p.precio, p.moneda)}
           {p.tipo_operacion === "renta" && (
@@ -105,14 +87,12 @@ export default async function DetallePropiedadPage({
           )}
         </p>
 
-        {/* grid de datos */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
-          <DataItem label="Dirección" value={p.direccion} />
+        {/* características — sin dirección */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
           <DataItem label="Metros cuadrados" value={`${p.metros_cuadrados} m²`} />
           {p.habitaciones != null && <DataItem label="Habitaciones" value={String(p.habitaciones)} />}
           {p.banos != null && <DataItem label="Baños" value={String(p.banos)} />}
           {p.parqueaderos != null && <DataItem label="Parqueaderos" value={String(p.parqueaderos)} />}
-          <DataItem label="Moneda" value={p.moneda} />
         </div>
 
         {p.descripcion && (
@@ -125,12 +105,6 @@ export default async function DetallePropiedadPage({
             </p>
           </div>
         )}
-
-        <p className="text-xs text-slate-400 mt-6 border-t border-slate-100 pt-4">
-          Creado el {new Date(p.creado_en).toLocaleDateString("es-CO", { dateStyle: "long" })}
-          {p.actualizado_en !== p.creado_en &&
-            ` · Actualizado el ${new Date(p.actualizado_en).toLocaleDateString("es-CO", { dateStyle: "long" })}`}
-        </p>
       </div>
     </div>
   );

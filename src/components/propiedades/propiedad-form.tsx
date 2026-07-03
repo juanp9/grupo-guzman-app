@@ -135,6 +135,9 @@ export default function PropiedadForm({
               <option value="oficina">Oficina</option>
               <option value="bodega">Bodega</option>
               <option value="terreno">Terreno</option>
+              <option value="lote">Lote</option>
+              <option value="casa_campestre">Casa campestre</option>
+              <option value="finca">Finca</option>
               <option value="edificio">Edificio</option>
               <option value="otro">Otro</option>
             </select>

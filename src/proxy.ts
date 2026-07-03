@@ -16,5 +16,5 @@ export default auth((req) => {
 
 export const config = {
   // Excluye archivos estáticos, imágenes y el handler de NextAuth
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|api/auth|api/debug-auth).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|api/auth|catalogo).*)"],
 };

@@ -7,6 +7,9 @@ export type TipoPropiedad =
   | "oficina"
   | "bodega"
   | "terreno"
+  | "lote"
+  | "casa_campestre"
+  | "finca"
   | "edificio"
   | "otro";
 

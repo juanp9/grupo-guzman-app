@@ -10,8 +10,35 @@ const TIPOS_PROPIEDAD = [
   { value: "oficina", label: "Oficina" },
   { value: "bodega", label: "Bodega" },
   { value: "terreno", label: "Terreno" },
+  { value: "lote", label: "Lote" },
+  { value: "casa_campestre", label: "Casa campestre" },
+  { value: "finca", label: "Finca" },
   { value: "edificio", label: "Edificio" },
   { value: "otro", label: "Otro" },
+];
+
+const ESTADO_TABS = [
+  { val: "", label: "Todas" },
+  {
+    val: "disponible",
+    label: "Disponibles",
+    active: "bg-green-100 text-green-800 border-green-300",
+  },
+  {
+    val: "reservado",
+    label: "Reservadas",
+    active: "bg-amber-100 text-amber-800 border-amber-300",
+  },
+  {
+    val: "vendido",
+    label: "Vendidas",
+    active: "bg-slate-200 text-slate-700 border-slate-400",
+  },
+  {
+    val: "rentado",
+    label: "Arrendadas",
+    active: "bg-purple-100 text-purple-800 border-purple-300",
+  },
 ];
 
 const inputCls =
@@ -24,20 +51,17 @@ export default function FiltersBar({ total }: { total: number }) {
   const [isPending, startTransition] = useTransition();
   const [panelOpen, setPanelOpen] = useState(false);
 
-  // Text inputs use local state (debounced or blur-applied)
   const [q, setQ] = useState(searchParams.get("q") ?? "");
   const [precioMin, setPrecioMin] = useState(searchParams.get("precio_min") ?? "");
   const [precioMax, setPrecioMax] = useState(searchParams.get("precio_max") ?? "");
   const [metrosMin, setMetrosMin] = useState(searchParams.get("metros_min") ?? "");
   const [metrosMax, setMetrosMax] = useState(searchParams.get("metros_max") ?? "");
 
-  // Select / button filters read directly from the URL (source of truth)
   const orden = searchParams.get("orden") ?? "reciente";
   const operacion = searchParams.get("operacion") ?? "";
   const tipo = searchParams.get("tipo") ?? "";
   const estado = searchParams.get("estado") ?? "";
 
-  // Build new URL preserving all current params + applying updates
   function navigate(updates: Record<string, string>) {
     const params = new URLSearchParams(searchParams.toString());
     Object.entries(updates).forEach(([k, v]) => {
@@ -45,30 +69,25 @@ export default function FiltersBar({ total }: { total: number }) {
       if (val && val !== "reciente") params.set(k, val);
       else params.delete(k);
     });
-    params.delete("pagina"); // reset page on any filter change
+    params.delete("pagina");
     const qs = params.toString();
     startTransition(() => {
       router.push(qs ? `${pathname}?${qs}` : pathname);
     });
   }
 
-  // Debounced text search — skip on first render to avoid redundant navigation
   const isFirstRender = useRef(true);
   const qTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      return;
-    }
+    if (isFirstRender.current) { isFirstRender.current = false; return; }
     if (qTimer.current) clearTimeout(qTimer.current);
     qTimer.current = setTimeout(() => navigate({ q }), 400);
-    return () => {
-      if (qTimer.current) clearTimeout(qTimer.current);
-    };
+    return () => { if (qTimer.current) clearTimeout(qTimer.current); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [q]);
 
-  const activeCount = ["operacion", "tipo", "estado", "precio_min", "precio_max", "metros_min", "metros_max"]
+  // Estado ya no cuenta para el badge del panel (tiene sus propios tabs)
+  const activeCount = ["operacion", "tipo", "precio_min", "precio_max", "metros_min", "metros_max"]
     .filter((k) => searchParams.get(k)).length;
 
   function clearAll() {
@@ -78,14 +97,29 @@ export default function FiltersBar({ total }: { total: number }) {
 
   return (
     <div className={`space-y-3 transition-opacity duration-150 ${isPending ? "opacity-60 pointer-events-none" : ""}`}>
-      {/* ── Barra principal ── */}
-      <div className="flex gap-2 flex-wrap sm:flex-nowrap">
-        {/* Búsqueda */}
-        <div className="relative flex-1 min-w-48">
-          <svg
-            className="absolute left-3 top-2.5 w-4 h-4 text-slate-400 pointer-events-none"
-            fill="none" stroke="currentColor" viewBox="0 0 24 24"
+
+      {/* ── Tabs de estado — siempre visibles ── */}
+      <div className="flex gap-1.5 flex-wrap">
+        {ESTADO_TABS.map(({ val, label, active }) => (
+          <button
+            key={val}
+            onClick={() => navigate({ estado: val })}
+            className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+              estado === val
+                ? active ?? "bg-slate-900 text-white border-slate-900"
+                : "bg-white text-slate-500 border-slate-200 hover:bg-slate-50 hover:text-slate-700"
+            }`}
           >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {/* ── Barra de búsqueda + orden + filtros ── */}
+      <div className="flex gap-2 flex-wrap sm:flex-nowrap">
+        <div className="relative flex-1 min-w-48">
+          <svg className="absolute left-3 top-2.5 w-4 h-4 text-slate-400 pointer-events-none"
+            fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
               d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
@@ -98,7 +132,6 @@ export default function FiltersBar({ total }: { total: number }) {
           />
         </div>
 
-        {/* Orden */}
         <select
           value={orden}
           onChange={(e) => navigate({ orden: e.target.value })}
@@ -111,7 +144,6 @@ export default function FiltersBar({ total }: { total: number }) {
           <option value="metros_desc">m² ↓</option>
         </select>
 
-        {/* Toggle filtros */}
         <button
           onClick={() => setPanelOpen((v) => !v)}
           className={`flex items-center gap-1.5 px-4 py-2 rounded-lg border text-sm font-medium transition-colors whitespace-nowrap ${
@@ -128,12 +160,11 @@ export default function FiltersBar({ total }: { total: number }) {
         </button>
       </div>
 
-      {/* ── Panel de filtros ── */}
+      {/* ── Panel colapsable (sin estado, ya está en tabs) ── */}
       {panelOpen && (
         <div className="bg-white rounded-xl border border-slate-200 p-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
 
-            {/* Operación */}
             <div>
               <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
                 Operación
@@ -159,7 +190,6 @@ export default function FiltersBar({ total }: { total: number }) {
               </div>
             </div>
 
-            {/* Tipo de propiedad */}
             <div>
               <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
                 Tipo
@@ -176,79 +206,39 @@ export default function FiltersBar({ total }: { total: number }) {
               </select>
             </div>
 
-            {/* Estado */}
-            <div>
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
-                Estado
-              </p>
-              <select
-                value={estado}
-                onChange={(e) => navigate({ estado: e.target.value })}
-                className={inputCls}
-              >
-                <option value="">Todos los estados</option>
-                <option value="disponible">Disponible</option>
-                <option value="reservado">Reservado</option>
-                <option value="vendido">Vendido</option>
-                <option value="rentado">Rentado</option>
-              </select>
-            </div>
-
-            {/* Precio */}
             <div>
               <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
                 Precio (COP)
               </p>
               <div className="flex gap-2">
-                <input
-                  type="number"
-                  value={precioMin}
+                <input type="number" value={precioMin}
                   onChange={(e) => setPrecioMin(e.target.value)}
                   onBlur={() => navigate({ precio_min: precioMin })}
                   onKeyDown={(e) => e.key === "Enter" && navigate({ precio_min: precioMin })}
-                  placeholder="Mínimo"
-                  className={inputCls}
-                  min={0}
-                />
-                <input
-                  type="number"
-                  value={precioMax}
+                  placeholder="Mínimo" className={inputCls} min={0} />
+                <input type="number" value={precioMax}
                   onChange={(e) => setPrecioMax(e.target.value)}
                   onBlur={() => navigate({ precio_max: precioMax })}
                   onKeyDown={(e) => e.key === "Enter" && navigate({ precio_max: precioMax })}
-                  placeholder="Máximo"
-                  className={inputCls}
-                  min={0}
-                />
+                  placeholder="Máximo" className={inputCls} min={0} />
               </div>
             </div>
 
-            {/* Metros cuadrados */}
             <div>
               <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
                 Metros cuadrados
               </p>
               <div className="flex gap-2">
-                <input
-                  type="number"
-                  value={metrosMin}
+                <input type="number" value={metrosMin}
                   onChange={(e) => setMetrosMin(e.target.value)}
                   onBlur={() => navigate({ metros_min: metrosMin })}
                   onKeyDown={(e) => e.key === "Enter" && navigate({ metros_min: metrosMin })}
-                  placeholder="Mínimo"
-                  className={inputCls}
-                  min={0}
-                />
-                <input
-                  type="number"
-                  value={metrosMax}
+                  placeholder="Mínimo" className={inputCls} min={0} />
+                <input type="number" value={metrosMax}
                   onChange={(e) => setMetrosMax(e.target.value)}
                   onBlur={() => navigate({ metros_max: metrosMax })}
                   onKeyDown={(e) => e.key === "Enter" && navigate({ metros_max: metrosMax })}
-                  placeholder="Máximo"
-                  className={inputCls}
-                  min={0}
-                />
+                  placeholder="Máximo" className={inputCls} min={0} />
               </div>
             </div>
           </div>
@@ -266,7 +256,6 @@ export default function FiltersBar({ total }: { total: number }) {
         </div>
       )}
 
-      {/* ── Contador de resultados ── */}
       <p className="text-xs text-slate-500">
         {isPending
           ? "Buscando..."
