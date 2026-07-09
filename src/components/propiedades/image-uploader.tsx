@@ -143,7 +143,6 @@ export default function ImageUploader({
         type="file"
         accept="image/jpeg,image/png,image/webp,image/gif,.jpg,.jpeg,.png,.webp,.gif"
         multiple
-        capture="environment"
         className="hidden"
         onChange={(e) => e.target.files && handleFiles(e.target.files)}
       />
