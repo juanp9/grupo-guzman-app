@@ -61,8 +61,8 @@ export default function PropiedadForm({
     defaultValues: propiedad
       ? {
           titulo: propiedad.titulo,
-          tipo_operacion: propiedad.tipo_operacion,
-          tipo_propiedad: propiedad.tipo_propiedad,
+          tipo_operacion: propiedad.tipo_operacion || "venta",
+          tipo_propiedad: propiedad.tipo_propiedad || "apartamento",
           ubicacion: propiedad.ubicacion,
           direccion: propiedad.direccion,
           metros_cuadrados: propiedad.metros_cuadrados,
@@ -72,7 +72,7 @@ export default function PropiedadForm({
           banos: propiedad.banos ?? undefined,
           parqueaderos: propiedad.parqueaderos ?? undefined,
           descripcion: propiedad.descripcion ?? "",
-          estado: propiedad.estado,
+          estado: propiedad.estado || "disponible",
           destacado: propiedad.destacado,
         }
       : {

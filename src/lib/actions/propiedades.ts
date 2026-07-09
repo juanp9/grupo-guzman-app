@@ -68,12 +68,19 @@ export async function getPropiedad(id: string): Promise<Propiedad | null> {
 export async function crearPropiedad(payload: unknown) {
   const parsed = propiedadSchema.safeParse(payload);
   if (!parsed.success) {
-    return { error: "Revisa los campos requeridos." };
+    const errors = parsed.error.issues.map(issue => `${issue.path.join('.')}: ${issue.message}`).join(", ");
+    return { error: errors || "Revisa los campos requeridos." };
   }
+
+  const dataToInsert = {
+    ...parsed.data,
+    tipo_operacion: parsed.data.tipo_operacion?.trim() || parsed.data.tipo_operacion,
+    tipo_propiedad: parsed.data.tipo_propiedad?.trim() || parsed.data.tipo_propiedad,
+  };
 
   const { data, error } = await supabaseAdmin
     .from("propiedades")
-    .insert(parsed.data)
+    .insert(dataToInsert)
     .select("id")
     .single();
 
@@ -86,12 +93,19 @@ export async function crearPropiedad(payload: unknown) {
 export async function actualizarPropiedad(id: string, payload: unknown) {
   const parsed = propiedadSchema.safeParse(payload);
   if (!parsed.success) {
-    return { error: "Revisa los campos requeridos." };
+    const errors = parsed.error.issues.map(issue => `${issue.path.join('.')}: ${issue.message}`).join(", ");
+    return { error: errors || "Revisa los campos requeridos." };
   }
+
+  const dataToUpdate = {
+    ...parsed.data,
+    tipo_operacion: parsed.data.tipo_operacion?.trim() || parsed.data.tipo_operacion,
+    tipo_propiedad: parsed.data.tipo_propiedad?.trim() || parsed.data.tipo_propiedad,
+  };
 
   const { error } = await supabaseAdmin
     .from("propiedades")
-    .update(parsed.data)
+    .update(dataToUpdate)
     .eq("id", id);
 
   if (error) return { error: error.message };

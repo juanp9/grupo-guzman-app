@@ -82,7 +82,8 @@ CREATE POLICY "Sin acceso publico" ON propiedades
 
 DROP POLICY IF EXISTS "Imagenes publicas - lectura" ON storage.objects;
 CREATE POLICY "Imagenes publicas - lectura" ON storage.objects
-  FOR SELECT);
+  FOR SELECT
+  USING (bucket_id = 'propiedades');
 
 -- Las operaciones de escritura (upload/delete) se hacen desde el servidor
 -- con el service_role key, que bypasea RLS — no se necesita política adicional.

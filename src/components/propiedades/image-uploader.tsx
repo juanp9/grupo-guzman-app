@@ -20,24 +20,28 @@ export default function ImageUploader({
     setUploading(true);
     setError(null);
 
-    const results = await Promise.all(
-      Array.from(files).map((file) => {
-        const fd = new FormData();
-        fd.append("file", file);
-        return subirImagen(fd);
-      })
-    );
+    try {
+      const results = await Promise.all(
+        Array.from(files).map((file) => {
+          const fd = new FormData();
+          fd.append("file", file);
+          return subirImagen(fd);
+        })
+      );
 
-    const errors = results.filter((r): r is { error: string } => "error" in r);
-    const urls = results
-      .filter((r): r is { url: string } => "url" in r)
-      .map((r) => r.url);
+      const errors = results.filter((r): r is { error: string } => "error" in r);
+      const urls = results
+        .filter((r): r is { url: string } => "url" in r)
+        .map((r) => r.url);
 
-    if (errors.length > 0) setError(errors.map((e) => e.error).join(" · "));
-    if (urls.length > 0) onChange([...value, ...urls]);
-
-    setUploading(false);
-    if (inputRef.current) inputRef.current.value = "";
+      if (errors.length > 0) setError(errors.map((e) => e.error).join(" · "));
+      if (urls.length > 0) onChange([...value, ...urls]);
+    } catch (err) {
+      setError("Error al cargar las imágenes. Intenta de nuevo.");
+    } finally {
+      setUploading(false);
+      if (inputRef.current) inputRef.current.value = "";
+    }
   }
 
   async function removeImage(index: number) {
