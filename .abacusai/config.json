@@ -12,6 +12,10 @@
       "Bash(npm run build *)",
       "Bash(git checkout .abacusai/config.json *)",
       "Bash(Bash(git add *))",
+      "Bash(Bash(git commit *))",
+      "Bash(git push origin *)",
+      "Bash(npm run build *)",
+      "Bash(Bash(git add *))",
       "Bash(Bash(git commit *))"
     ]
   }

@@ -37,7 +37,9 @@ export default function ImageUploader({
       if (errors.length > 0) setError(errors.map((e) => e.error).join(" · "));
       if (urls.length > 0) onChange([...value, ...urls]);
     } catch (err) {
-      setError("Error al cargar las imágenes. Intenta de nuevo.");
+      const errorMsg = err instanceof Error ? err.message : "Error desconocido al cargar las imágenes";
+      console.error("Error al cargar imágenes:", err);
+      setError(`Error: ${errorMsg}. Intenta de nuevo.`);
     } finally {
       setUploading(false);
       if (inputRef.current) inputRef.current.value = "";
@@ -139,8 +141,9 @@ export default function ImageUploader({
       <input
         ref={inputRef}
         type="file"
-        accept="image/jpeg,image/png,image/webp,image/gif"
+        accept="image/jpeg,image/png,image/webp,image/gif,.jpg,.jpeg,.png,.webp,.gif"
         multiple
+        capture="environment"
         className="hidden"
         onChange={(e) => e.target.files && handleFiles(e.target.files)}
       />
