@@ -4,6 +4,7 @@ import { getPropiedad } from "@/lib/actions/propiedades";
 import DeleteButton from "@/components/propiedades/delete-button";
 import ShareButton from "@/components/propiedades/share-button";
 import EstadoSelector from "@/components/propiedades/estado-selector";
+import GaleriaImagenes from "@/components/propiedades/galeria-imagenes";
 
 const TIPO_OPERACION: Record<string, string> = { renta: "Renta", venta: "Venta" };
 const TIPO_PROPIEDAD: Record<string, string> = {
@@ -62,19 +63,7 @@ export default async function DetallePropiedadPage({
       </div>
 
       {/* galería */}
-      {p.imagenes?.length > 0 && (
-        <div className="flex gap-3 overflow-x-auto pb-2 mb-6 snap-x">
-          {p.imagenes.map((url, i) => (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              key={i}
-              src={url}
-              alt={`Imagen ${i + 1} de ${p.titulo}`}
-              className="h-64 w-auto max-w-sm rounded-xl object-cover shrink-0 snap-start border border-slate-200"
-            />
-          ))}
-        </div>
-      )}
+      <GaleriaImagenes imagenes={p.imagenes ?? []} titulo={p.titulo} />
 
       {/* contenido */}
       <div className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8">

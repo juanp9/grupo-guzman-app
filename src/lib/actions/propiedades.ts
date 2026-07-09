@@ -74,9 +74,14 @@ export async function crearPropiedad(payload: unknown) {
 
   const dataToInsert = {
     ...parsed.data,
-    tipo_operacion: parsed.data.tipo_operacion?.trim() || parsed.data.tipo_operacion,
-    tipo_propiedad: parsed.data.tipo_propiedad?.trim() || parsed.data.tipo_propiedad,
+    tipo_operacion: (parsed.data.tipo_operacion as string)?.trim() || parsed.data.tipo_operacion,
+    tipo_propiedad: (parsed.data.tipo_propiedad as string)?.trim() || parsed.data.tipo_propiedad,
   };
+
+  console.log("Intentando insertar propiedad:", {
+    tipo_propiedad: dataToInsert.tipo_propiedad,
+    tipo_operacion: dataToInsert.tipo_operacion,
+  });
 
   const { data, error } = await supabaseAdmin
     .from("propiedades")
@@ -84,7 +89,10 @@ export async function crearPropiedad(payload: unknown) {
     .select("id")
     .single();
 
-  if (error) return { error: error.message };
+  if (error) {
+    console.error("Error al insertar propiedad:", error);
+    return { error: error.message };
+  }
 
   revalidatePath("/propiedades");
   redirect(`/propiedades/${data.id}`);

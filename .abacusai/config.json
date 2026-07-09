@@ -6,7 +6,13 @@
       "Bash(npm run lint *)",
       "Bash(powershell *)",
       "Bash(npx eslint . *)",
-      "Bash(npm run build *)"
+      "Bash(npm run build *)",
+      "Bash(npm run build *)",
+      "Bash(git checkout .abacusai/config.json *)",
+      "Bash(npm run build *)",
+      "Bash(git checkout .abacusai/config.json *)",
+      "Bash(Bash(git add *))",
+      "Bash(Bash(git commit *))"
     ]
   }
 }
