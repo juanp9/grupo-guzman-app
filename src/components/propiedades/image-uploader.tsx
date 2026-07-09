@@ -22,11 +22,28 @@ export default function ImageUploader({
 
     try {
       const results = await Promise.all(
-        Array.from(files).map((file) => {
+        Array.from(files).map(async (file) => {
           console.log("Procesando archivo:", file.name, file.type, file.size);
           const fd = new FormData();
           fd.append("file", file);
-          return subirImagen(fd);
+          
+          try {
+            const response = await fetch("/api/upload-image", {
+              method: "POST",
+              body: fd,
+            });
+
+            if (!response.ok) {
+              const errorData = await response.json();
+              return { error: errorData.error || `Error ${response.status}` };
+            }
+
+            const data = await response.json();
+            return { url: data.url };
+          } catch (err) {
+            const errorMsg = err instanceof Error ? err.message : String(err);
+            return { error: `Error de red: ${errorMsg}` };
+          }
         })
       );
 
