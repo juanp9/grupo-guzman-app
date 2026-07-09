@@ -69,19 +69,19 @@ export async function crearPropiedad(payload: unknown) {
   const parsed = propiedadSchema.safeParse(payload);
   if (!parsed.success) {
     const errors = parsed.error.issues.map(issue => `${issue.path.join('.')}: ${issue.message}`).join(", ");
+    console.error("Validación fallida:", errors);
     return { error: errors || "Revisa los campos requeridos." };
   }
 
   const dataToInsert = {
     ...parsed.data,
-    tipo_operacion: (parsed.data.tipo_operacion as string)?.trim() || parsed.data.tipo_operacion,
-    tipo_propiedad: (parsed.data.tipo_propiedad as string)?.trim() || parsed.data.tipo_propiedad,
+    tipo_operacion: (parsed.data.tipo_operacion as string)?.toLowerCase().trim() || parsed.data.tipo_operacion,
+    tipo_propiedad: (parsed.data.tipo_propiedad as string)?.toLowerCase().trim() || parsed.data.tipo_propiedad,
   };
 
-  console.log("Intentando insertar propiedad:", {
-    tipo_propiedad: dataToInsert.tipo_propiedad,
-    tipo_operacion: dataToInsert.tipo_operacion,
-  });
+  console.log("=== INSERTANDO PROPIEDAD ===");
+  console.log("tipo_propiedad:", dataToInsert.tipo_propiedad);
+  console.log("tipo_operacion:", dataToInsert.tipo_operacion);
 
   const { data, error } = await supabaseAdmin
     .from("propiedades")
@@ -90,9 +90,14 @@ export async function crearPropiedad(payload: unknown) {
     .single();
 
   if (error) {
-    console.error("Error al insertar propiedad:", error);
-    return { error: error.message };
+    console.error("=== ERROR DE SUPABASE ===");
+    console.error("Código:", error.code);
+    console.error("Mensaje:", error.message);
+    return { error: `${error.message}${error.hint ? ` - ${error.hint}` : ""}` };
   }
+
+  console.log("=== PROPIEDAD INSERTADA EXITOSAMENTE ===");
+  console.log("ID:", data.id);
 
   revalidatePath("/propiedades");
   redirect(`/propiedades/${data.id}`);
