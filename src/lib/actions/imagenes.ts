@@ -6,7 +6,7 @@ export async function subirImagen(
   formData: FormData
 ): Promise<{ url: string } | { error: string }> {
   try {
-    const file = formData.get("file") as File;
+    const file = formData.get("file") as File | null;
 
     console.log("📸 Iniciando carga de imagen:", {
       nombre: file?.name,
@@ -14,20 +14,26 @@ export async function subirImagen(
       tamaño: file?.size,
     });
 
-    if (!file || file.size === 0) {
-      console.error("❌ Archivo no válido:", file);
-      return { error: "No se seleccionó ningún archivo." };
+    if (!file) {
+      console.error("❌ Archivo no encontrado en FormData");
+      return { error: "Archivo no válido." };
+    }
+
+    if (file.size === 0) {
+      console.error("❌ Archivo vacío:", file.name);
+      return { error: "El archivo está vacío." };
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      console.error("❌ Archivo muy grande:", file.size);
+      console.error("❌ Archivo muy grande:", file.size, "bytes");
       return { error: "El archivo supera los 5 MB." };
     }
 
     const allowedMimes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
     const allowedExtensions = ["jpg", "jpeg", "png", "webp", "gif"];
     
-    const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
+    const nameWithExt = file.name || "imagen.jpg";
+    const ext = nameWithExt.split(".").pop()?.toLowerCase() ?? "";
     const isMimeValid = allowedMimes.includes(file.type);
     const isExtValid = allowedExtensions.includes(ext);
     
@@ -35,35 +41,49 @@ export async function subirImagen(
 
     if (!isMimeValid && !isExtValid) {
       console.error("❌ Formato no permitido:", { ext, type: file.type });
-      return { error: `Formato no permitido. Usa JPG, PNG, WebP o GIF.` };
+      return { error: `Formato no permitido (${ext}). Usa JPG, PNG, WebP o GIF.` };
     }
 
-    const path = `${crypto.randomUUID()}.${ext || "jpg"}`;
+    const finalPath = `${crypto.randomUUID()}.${ext || "jpg"}`;
     const contentType = file.type || "image/jpeg";
 
-    console.log("📤 Subiendo a Supabase:", { path, contentType });
+    console.log("📤 Subiendo a Supabase:", { path: finalPath, contentType, size: file.size });
 
-    const { error } = await supabaseAdmin.storage
+    const arrayBuffer = await file.arrayBuffer();
+    console.log("✅ Archivo convertido a ArrayBuffer:", arrayBuffer.byteLength, "bytes");
+
+    const { error: uploadError } = await supabaseAdmin.storage
       .from("propiedades")
-      .upload(path, await file.arrayBuffer(), {
+      .upload(finalPath, arrayBuffer, {
         contentType,
         upsert: false,
       });
 
-    if (error) {
-      console.error("❌ Error de Supabase:", error);
-      return { error: error.message };
+    if (uploadError) {
+      console.error("❌ Error de Supabase al subir:", {
+        message: uploadError.message,
+        status: (uploadError as any).status,
+      });
+      return { error: `Error al subir: ${uploadError.message}` };
     }
+
+    console.log("✅ Archivo subido a Supabase");
 
     const { data } = supabaseAdmin.storage
       .from("propiedades")
-      .getPublicUrl(path);
+      .getPublicUrl(finalPath);
+
+    if (!data?.publicUrl) {
+      console.error("❌ No se pudo obtener URL pública");
+      return { error: "Error al obtener URL de la imagen." };
+    }
 
     console.log("✅ Imagen subida exitosamente:", data.publicUrl);
     return { url: data.publicUrl };
   } catch (err) {
-    console.error("❌ Error inesperado:", err);
-    return { error: `Error: ${err instanceof Error ? err.message : "desconocido"}` };
+    console.error("❌ Error inesperado en subirImagen:", err);
+    const errorMsg = err instanceof Error ? err.message : String(err);
+    return { error: `Error: ${errorMsg}` };
   }
 }
 

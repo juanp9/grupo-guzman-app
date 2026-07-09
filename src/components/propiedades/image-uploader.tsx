@@ -23,6 +23,7 @@ export default function ImageUploader({
     try {
       const results = await Promise.all(
         Array.from(files).map((file) => {
+          console.log("Procesando archivo:", file.name, file.type, file.size);
           const fd = new FormData();
           fd.append("file", file);
           return subirImagen(fd);
@@ -34,12 +35,16 @@ export default function ImageUploader({
         .filter((r): r is { url: string } => "url" in r)
         .map((r) => r.url);
 
-      if (errors.length > 0) setError(errors.map((e) => e.error).join(" · "));
+      if (errors.length > 0) {
+        const errorMsg = errors.map((e) => e.error).join(" · ");
+        console.error("Errores en carga:", errorMsg);
+        setError(errorMsg);
+      }
       if (urls.length > 0) onChange([...value, ...urls]);
     } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : "Error desconocido al cargar las imágenes";
-      console.error("Error al cargar imágenes:", err);
-      setError(`Error: ${errorMsg}. Intenta de nuevo.`);
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      console.error("Error fatal al cargar imágenes:", err);
+      setError(`Error: ${errorMsg}`);
     } finally {
       setUploading(false);
       if (inputRef.current) inputRef.current.value = "";
