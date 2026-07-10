@@ -1,6 +1,14 @@
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 
+function sanitizeFileName(fileName: string): string {
+  return fileName
+    .toLowerCase()
+    .replace(/[^\w.-]/g, "_")
+    .replace(/_{2,}/g, "_")
+    .replace(/^_+|_+$/g, "");
+}
+
 export async function POST(request: NextRequest) {
   try {
     console.log("📸 [API] Iniciando carga de imagen...");
@@ -49,10 +57,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const path = `${crypto.randomUUID()}.${ext || "jpg"}`;
+    const sanitizedName = sanitizeFileName(file.name.replace(/\.[^/.]+$/, ""));
+    const path = `${sanitizedName}_${crypto.randomUUID()}.${ext || "jpg"}`;
     const contentType = file.type || "image/jpeg";
 
-    console.log("📤 [API] Subiendo a Supabase:", { path, contentType });
+    console.log("📤 [API] Subiendo a Supabase:", { path, contentType, originalName: file.name });
 
     const arrayBuffer = await file.arrayBuffer();
     const { error: uploadError } = await supabaseAdmin.storage

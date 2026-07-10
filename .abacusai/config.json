@@ -27,6 +27,7 @@
       "Bash(Bash(git add *))",
       "Bash(Bash(git commit *))",
       "Bash(npm run build *)",
+      "Bash(npm run build *)",
       "Bash(npm run build *)"
     ]
   }
