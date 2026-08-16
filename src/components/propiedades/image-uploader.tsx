@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { subirImagen, eliminarImagenStorage } from "@/lib/actions/imagenes";
+import { eliminarImagenStorage } from "@/lib/actions/imagenes";
 
 export default function ImageUploader({
   value,
@@ -24,13 +24,28 @@ export default function ImageUploader({
       const results = await Promise.all(
         Array.from(files).map(async (file) => {
           console.log("Procesando archivo:", file.name, file.type, file.size);
+
+          // Renombramos el archivo a un nombre ASCII seguro ANTES de armar el
+          // FormData: Safari/WebKit lanza "SyntaxError: The string did not
+          // match the expected pattern." al construir el multipart body si el
+          // nombre original trae acentos u otros caracteres no-ASCII (común en
+          // fotos de iOS). Sanitizar en el servidor no sirve porque la
+          // petición nunca llega a salir del navegador.
+          const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+          const safeName = `${crypto.randomUUID()}.${ext}`;
+          const safeFile = new File([file], safeName, { type: file.type });
+
           const fd = new FormData();
-          fd.append("file", file);
-          
+          fd.append("file", safeFile);
+
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 30_000);
+
           try {
             const response = await fetch("/api/upload-image", {
               method: "POST",
               body: fd,
+              signal: controller.signal,
             });
 
             if (!response.ok) {
@@ -41,8 +56,13 @@ export default function ImageUploader({
             const data = await response.json();
             return { url: data.url };
           } catch (err) {
+            if (err instanceof DOMException && err.name === "AbortError") {
+              return { error: "La subida tardó demasiado y se canceló. Verifica tu conexión." };
+            }
             const errorMsg = err instanceof Error ? err.message : String(err);
             return { error: `Error de red: ${errorMsg}` };
+          } finally {
+            clearTimeout(timeoutId);
           }
         })
       );
